@@ -2,8 +2,7 @@ from parser import *
 from solver import *
 
 def main():
-    parser = cmd_parser()
-    args = parser.parse_args()
+    args = cmd_parser()
     print(args)
 
     print(instance_parser())
