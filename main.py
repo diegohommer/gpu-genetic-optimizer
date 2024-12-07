@@ -6,5 +6,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    print(instance_parser())
+
 if __name__ == "__main__":
     main()
