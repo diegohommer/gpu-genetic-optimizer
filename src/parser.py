@@ -25,7 +25,7 @@ def instance_parser():
     Parse an instance of the problem from user input.
     
     Args:
-        None (uses input() to collect data).
+        None (uses input() to collect instance data).
         
     Returns:
         Tuple: A tuple containing the following:
@@ -46,4 +46,4 @@ def instance_parser():
         prn_type, prn_vram = map(int, new_prn.split())
         prns[i] = (prn_type, prn_vram)
 
-    return gpu_total, vram_total, types_total, prns
+    return gpu_total, vram_total, types_total, prn_total, prns

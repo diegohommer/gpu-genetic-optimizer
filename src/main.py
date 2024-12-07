@@ -1,12 +1,13 @@
-from src.parser import *
-from src.solver import *
+from parser import *
+from solver import *
 
 def main():
+    # Receive algorithm parameters and instance
     params = cmd_parser()
-    print(params)
+    gpu_total, vram_total, types_total, prn_total, prns = instance_parser()
 
-    gpu_total,vram_total,types_total,prns = instance_parser()
-    solve_instance(gpu_total, vram_total, types_total, prns, params)
+    #  Run genetic algorithm using received parameters and instace
+    run_genetic_algorithm(gpu_total, vram_total, types_total, prn_total, prns, params)
 
 if __name__ == "__main__":
     main()
