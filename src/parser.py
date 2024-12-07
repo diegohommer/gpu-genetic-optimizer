@@ -1,5 +1,5 @@
-import argparse
 import numpy as np
+import argparse
 
 def cmd_parser():
     """
@@ -34,15 +34,15 @@ def instance_parser():
             types_total: Number of different types of PRNs (int)
             prns: Structured numpy array with PRN data (dtype: [('prn_type', 'i4'), ('prn_vram', 'i4')])
     """
-    gpu_total = int(input("Insert number of GPUs: "))
-    vram_total = int(input("Insert VRAM capacity of GPUs: "))
-    types_total = int(input("Insert number of different types: "))
-    prn_total = int(input("Insert number of PRNs: "))
+    gpu_total = int(input())
+    vram_total = int(input())
+    types_total = int(input())
+    prn_total = int(input())
 
     dtype = np.dtype([('prn_type', 'i4'), ('prn_vram', 'i4')])
     prns = np.zeros(prn_total, dtype=dtype)
     for i in range(prn_total):
-        new_prn = input(f"Insert {i + 1}º PRN (format: type vram): ")
+        new_prn = input()
         prn_type, prn_vram = map(int, new_prn.split())
         prns[i] = (prn_type, prn_vram)
 
