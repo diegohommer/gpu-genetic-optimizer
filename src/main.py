@@ -1,5 +1,5 @@
 from parser import *
-from solver import *
+from genetic_algorithm import *
 
 def main():
     # Receive algorithm parameters and instance
