@@ -18,6 +18,7 @@ def cmd_parser():
     )
     parser.add_argument("output_file", help="File to save the best solution.")
     parser.add_argument("--population_size", type=int, required=False, default=100, help="Number of initial solutions (default 100).")
+    parser.add_argument("--recombination_rate", type=float, required=False, default=0.5, help="Rate at which solutions are recombinated to generate new solutions.")
     return parser.parse_args()
 
 def instance_parser():

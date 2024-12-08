@@ -89,7 +89,7 @@ def calculate_fitness(chromosome, prns, total_prns, total_gpus, total_types):
     """
     Calculate the quality of a given solution based on the distribution of PRN types along the GPUs
     """
-    gpu_type_distribution = np.zeros((total_gpus, total_types), dtype=bool)
+    gpu_type_distribution = np.bool((total_gpus, total_types), dtype=bool)
 
     type_distribution = 0
     for prn_index in range(total_prns):
