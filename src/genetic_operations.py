@@ -1,74 +1,102 @@
 import random as rand
 import numpy as np
 
-def generate_valid_solution(prns, total_gpus, total_vram, total_types, total_prns):
+
+def generate_feasible_solution(prns: int, total_prns: int, total_types: int, total_gpus: int, total_vram: int):
     """
-    Finds a valid solution for the given instance of the OGD problem.
+    Finds a feasible solution for the OGD problem instance.
     """
-    sorted_indices = np.argsort(-prns['prn_vram'])                           # Get indices that would sort the PRNs by VRAM consumption (descending order)
-    gpus_available_vram = np.full(total_gpus, total_vram, dtype=int)         # Track remaining VRAM for each GPU
-    gpus_type_distribution = np.zeros((total_gpus, total_types), dtype=int)  # Track type distribution for each GPU (2D array: GPUs x Types)
-    chromosome = np.full(total_prns, -1, dtype=int)                          # Solution array (-1 means unallocated) 
-    chromosome_fitness = 0
+    prns_sorted_by_vram = np.argsort(-prns['prn_vram'])             # PRNs sorted by VRAM consumption (descending)
+    gpu_vram = np.full(total_gpus, total_vram, dtype=int)           # Remaining VRAM per GPU
+    gpu_type_dist = np.zeros((total_gpus, total_types), dtype=int)  # Type distribution (GPUs x Types)
+    solution = np.full(total_prns, -1, dtype=int)                   # Solution array (-1 => unallocated) 
+    fitness = 0
 
     # First Fit Descending (FFD) greedy heuristic to try to find a valid solution
-    for sorted_index in sorted_indices:
-        prn_vram = prns[sorted_index]['prn_vram']
-        prn_type = prns[sorted_index]['prn_type'] - 1
+    for prn_index in prns_sorted_by_vram:
+        prn_vram = prns[prn_index]['prn_vram']
+        prn_type = prns[prn_index]['prn_type'] - 1
 
         # Check each GPU for sufficient VRAM        
         for gpu_index in range(total_gpus):            
-            if (prn_vram <= gpus_available_vram[gpu_index]): 
-                chromosome[sorted_index] = gpu_index                   
-                gpus_available_vram[gpu_index] -= prn_vram             
-                gpus_type_distribution[gpu_index][prn_type] += 1       
-                if(gpus_type_distribution[gpu_index][prn_type] == 1):
-                    chromosome_fitness -= 1                            
+            if (prn_vram <= gpu_vram[gpu_index]): 
+                solution[prn_index] = gpu_index                   
+                gpu_vram[gpu_index] -= prn_vram             
+                gpu_type_dist[gpu_index][prn_type] += 1       
+                if(gpu_type_dist[gpu_index][prn_type] == 1):
+                    fitness -= 1                            
                 break
         else:
             # If heuristic fails to find a valid solution run for the hills!
             return False
 
-    return chromosome, gpus_available_vram, gpus_type_distribution, chromosome_fitness
+    return solution, gpu_vram, gpu_type_dist, fitness
 
 
-def generate_initial_population(population_size, total_gpus, total_vram, total_types, total_prns, prns):  
-    population = np.empty((population_size, total_prns), dtype=int)              # Array to store valid generated chromosomes
-    vram_per_solution = np.empty((population_size, total_gpus), dtype=int)  # Array to store GPUs remaining VRAM for each chromosome
-    type_distribution_per_solution = np.empty(((total_gpus, total_types), population_size), dtype=int)
+def generate_initial_population(population_size: int, total_gpus: int, total_vram: int, total_types: int, total_prns: int, prns: np.ndarray):  
+    """
+    Generate initial solution population for the OGD problem instance
+    """
+    population = np.empty((population_size, total_prns), dtype=int)                               # Valid generated solutions/chromosomes
+    gpu_vram_population = np.empty((population_size, total_gpus), dtype=int)                      # GPUs remaining VRAM per solution/chromosome
+    gpu_type_dist_population = np.empty((population_size, total_gpus, total_types), dtype=int)    # GPUs type distribution per solution/chromosome
+    fitness_population = np.empty(population_size, dtype=int)                                     # Fitness per solution/chromosome
+    best_solution = 0                                                                             # Best solution population index
+    total_mutations = int(0.5 * population_size) 
 
-
-    valid_solution, gpus = generate_valid_solution(prns, total_gpus, total_vram, total_types, total_prns)
-
+    # Insert valid solution data into populations
+    valid_solution, solution_vram, solution_type_dist, solution_fitness = generate_feasible_solution(prns, total_prns, total_types, total_gpus, total_vram)
     population[0] = valid_solution
-    gpu_population[0] = gpus
+    gpu_vram_population[0] = solution_vram
+    gpu_type_dist_population[0] = solution_type_dist
+    fitness_population[0] = solution_fitness
+
+    # Mutate valid solution to generate the rest of the population
     for i in range(1,population_size):
-        population[i], gpu_population[i] = mutate_solution(valid_solution, int(0.5 * total_prns), prns, total_prns, gpus, total_gpus)
+        population[i], gpu_vram_population[i], gpu_type_dist_population[i], fitness_population[i] = mutate_solution(
+            solution=valid_solution,
+            gpu_vram=solution_vram,
+            gpu_type_dist=solution_type_dist,
+            fitness=solution_fitness,
+            total_mutations=total_mutations, 
+            prns=prns,
+            total_prns=total_prns,
+            total_gpus=total_gpus
+        )
+        if(fitness_population[i] > fitness_population[best_solution]): best_solution = i # Update best solution found
 
-    return population, gpu_population
+    return population, gpu_vram_population, gpu_type_dist_population, fitness_population, best_solution
 
 
-def mutate_solution(chromosome, total_gene_mutations, prns, total_prns, gpus, total_gpus):
+def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, total_mutations: int, prns, total_prns: int, total_gpus: int):
     """
     Randomly mutates the input chromosome (solution) by changing the allocation of PRNs
     """
-    for _ in range(total_gene_mutations):
+    for _ in range(total_mutations):
         # Sort a random PRN to be reallocated
         prn_index = rand.randint(0, total_prns-1)
         prn_vram = prns[prn_index]['prn_vram']
-        old_gpu_index = chromosome[prn_index]
+        prn_type = prns[prn_index]['prn_type'] - 1
+        old_gpu_index = solution[prn_index]
 
         # Sort a valid GPU for the PRN to be reallocated to
-        valid_gpus = [i for i in range(total_gpus) if gpus[i] >= prn_vram and i != old_gpu_index]
+        valid_gpus = [i for i in range(total_gpus) if gpu_vram[i] >= prn_vram and i != old_gpu_index]
         if valid_gpus:  
             new_gpu_index = rand.choice(valid_gpus)
 
-            gpus[old_gpu_index] += prn_vram  # Restore VRAM to the old GPU
-            gpus[new_gpu_index] -= prn_vram  # Deduct VRAM from the new GPU
+            # Update VRAM & type distribution of old and new GPU
+            gpu_vram[old_gpu_index] += prn_vram           
+            gpu_type_dist[old_gpu_index][prn_type] -= 1
+            gpu_vram[new_gpu_index] -= prn_vram 
+            gpu_type_dist[new_gpu_index][prn_type] += 1
 
-            chromosome[prn_index] = new_gpu_index
+            # Update fitness of mutated solution
+            if gpu_type_dist[old_gpu_index][prn_type] == 0: fitness += 1
+            if gpu_type_dist[new_gpu_index][prn_type] == 1: fitness -= 1
 
-    return chromosome, gpus
+            solution[prn_index] = new_gpu_index
+
+    return solution, gpu_vram, gpu_type_dist, fitness
     
 
 def recombine_solutions(parent1, parent2, prns, total_prns, gpus1, gpus2, total_gpus, total_vram):
@@ -103,24 +131,4 @@ def recombine_solutions(parent1, parent2, prns, total_prns, gpus1, gpus2, total_
                 # If couldn't find a valid recombination return the first parent
                 return parent1, gpus1
             
-    return child_chromosome, child_gpus
-
-
-def calculate_fitness(chromosome, prns, total_prns, total_gpus, total_types):
-    """
-    Calculate the quality of a given solution based on the distribution of PRN types along the GPUs
-    """
-    gpu_type_distribution = np.bool((total_gpus, total_types), dtype=bool)
-
-    type_distribution = 0
-    for prn_index in range(total_prns):
-        prn_type = prns[prn_index]['prn_type'] - 1
-        prn_gpu = chromosome[prn_index]
-
-        if (not gpu_type_distribution[prn_gpu][prn_type]):
-            gpu_type_distribution[prn_gpu][prn_type] = 1
-            type_distribution += 1
-
-    return type_distribution
-        
-
+    return child_chromosome, child_gpus       

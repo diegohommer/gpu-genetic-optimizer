@@ -3,8 +3,16 @@ from genetic_operations import *
 def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns, params):
     population_size = params.population_size
     recombination_rate = params.recombination_rate
-    population, gpu_population = generate_initial_population(population_size, total_gpus, total_vram, total_types, total_prns, prns)
+    population, gpu_vram_population, gpu_type_dist_population, fitness_population, best_solution = generate_initial_population(
+        population_size, total_gpus, total_vram, total_types, total_prns, prns
+    )
+    print(population)
+    print(population[0])
+    print(fitness_population[0])
+    print(population[best_solution])
+    print(fitness_population[best_solution])
 
+    """
     i = 0
     while(i < 2):
         new_population = np.empty((population_size, total_prns), dtype=int)
@@ -15,5 +23,4 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
             
         population = np.copy(new_population)
         i += 1
-
-    print(population)
+    """

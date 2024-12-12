@@ -1,5 +1,5 @@
 #!/bin/bash
 python3 ./src/main.py \
-    --population_size 1000 \
+    --population_size 100 \
     --recombination_rate 0.4 \
-    test.txt < example_instances/dog_5.txt
+    test.txt < example_instances/dog_7.txt
