@@ -12,6 +12,7 @@ def cmd_parser():
         Namespace: An object containing the following parsed command-line arguments:
             output_file: File to save the best solution (str).
             population_size: Number of initial solutions (int, default 100).
+            recombination_rate: Chance for a gene in a population to be recombined.
     """
     parser = argparse.ArgumentParser(
         description="Solve an instance of the Optimal GPU Distribution problem with a genetic algorithm."
@@ -19,6 +20,7 @@ def cmd_parser():
     parser.add_argument("output_file", help="File to save the best solution.")
     parser.add_argument("--population_size", type=int, required=False, default=100, help="Number of initial solutions (default 100).")
     parser.add_argument("--recombination_rate", type=float, required=False, default=0.5, help="Rate at which solutions are recombinated to generate new solutions.")
+    parser.add_argument("--mutation_rate", type=float, required=False, default=0.5, help="Rate at which solutions are mutated to generate new solutions.")
     return parser.parse_args()
 
 def instance_parser():
