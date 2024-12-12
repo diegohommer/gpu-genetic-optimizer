@@ -24,7 +24,7 @@ def generate_feasible_solution(prns: int, total_prns: int, total_types: int, tot
                 gpu_vram[gpu_index] -= prn_vram             
                 gpu_type_dist[gpu_index][prn_type] += 1       
                 if(gpu_type_dist[gpu_index][prn_type] == 1):
-                    fitness -= 1                            
+                    fitness += 1                            
                 break
         else:
             # If heuristic fails to find a valid solution run for the hills!
@@ -91,24 +91,27 @@ def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, total_mutat
             gpu_type_dist[new_gpu_index][prn_type] += 1
 
             # Update fitness of mutated solution
-            if gpu_type_dist[old_gpu_index][prn_type] == 0: fitness += 1
-            if gpu_type_dist[new_gpu_index][prn_type] == 1: fitness -= 1
+            if gpu_type_dist[old_gpu_index][prn_type] == 0: fitness -= 1
+            if gpu_type_dist[new_gpu_index][prn_type] == 1: fitness += 1
 
             solution[prn_index] = new_gpu_index
 
     return solution, gpu_vram, gpu_type_dist, fitness
     
 
-def recombine_solutions(parent1, parent2, prns, total_prns, gpus1, gpus2, total_gpus, total_vram):
+def recombine_solutions(parent1, parent2, prns, total_prns, total_types, total_gpus, total_vram):
     """
     Combines two parent solutions into a new child solution using uniform crossover.
     """
     # Initialize child chromosome and GPUs 
-    child_chromosome = np.full(total_prns, -1, dtype=int)
-    child_gpus = np.full(total_gpus, total_vram, dtype=int)
+    child_solution = np.full(total_prns, -1, dtype=int)
+    child_gpu_vram = np.full(total_gpus, total_vram, dtype=int)
+    child_gpu_type_dist = np.zeros((total_gpus, total_types), dtype=int)
+    child_fitness = 0
 
     for prn_index in range(total_prns):
         prn_vram = prns[prn_index]['prn_vram']
+        prn_type = prns[prn_index]['prn_type'] - 1
 
         # 50%-50% chance to receive each allocation from one of the parents
         if (rand.random() < 0.5):
@@ -116,19 +119,25 @@ def recombine_solutions(parent1, parent2, prns, total_prns, gpus1, gpus2, total_
         else:
             selected_gpu = parent2[prn_index]
 
-        if(child_gpus[selected_gpu] >= prn_vram):
-            # If the chosen allocation is valid, transfer it to the child chromosome
-            child_chromosome[prn_index] = selected_gpu
-            child_gpus[selected_gpu] -= prn_vram
+        if(child_gpu_vram[selected_gpu] >= prn_vram):
+            # If the chosen allocation is valid, transfer it to the child solution/chromosome
+            child_solution[prn_index] = selected_gpu
+            child_gpu_vram[selected_gpu] -= prn_vram
+            child_gpu_type_dist[selected_gpu][prn_type] += 1
+            if child_gpu_type_dist[selected_gpu][prn_type] == 1:
+                child_fitness += 1
         else:
             # If the chosen allocation isnt valid, sort a valid GPU to allocate the PRN to
-            valid_gpus = [gpu_idx for gpu_idx in range(total_gpus) if child_gpus[gpu_idx] >= prn_vram]
+            valid_gpus = [gpu_idx for gpu_idx in range(total_gpus) if child_gpu_vram[gpu_idx] >= prn_vram]
             if valid_gpus:
                 selected_gpu = rand.choice(valid_gpus)
-                child_chromosome[prn_index] = selected_gpu
-                child_gpus[selected_gpu] -= prn_vram
+                child_solution[prn_index] = selected_gpu
+                child_gpu_vram[selected_gpu] -= prn_vram
+                child_gpu_type_dist[selected_gpu][prn_type] += 1
+                if child_gpu_type_dist[selected_gpu][prn_type] == 1:
+                    child_fitness += 1
             else:
-                # If couldn't find a valid recombination return the first parent
-                return parent1, gpus1
+                # If couldn't find a valid recombination return a feasible solution
+                return generate_feasible_solution(prns, total_prns, total_types, total_gpus, total_vram)
             
-    return child_chromosome, child_gpus       
+    return child_solution, child_gpu_vram, child_gpu_type_dist, child_fitness       

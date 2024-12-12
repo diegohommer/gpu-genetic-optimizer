@@ -1,5 +1,10 @@
-#!/bin/bash
 python3 ./src/main.py \
-    --population_size 100 \
-    --recombination_rate 0.4 \
+    --population-size 100 \
+    --crossover-rate 0.5 \
+    --mutation-rate 0.05 \
+    --max-iterations 1000 \
+    --elitism-rate 0.1 \
+    --stagnation-limit 50 \
+    --hall-of-fame-size 1 \
+    --seed None \
     test.txt < example_instances/dog_7.txt
