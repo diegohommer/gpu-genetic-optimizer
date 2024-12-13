@@ -1,9 +1,9 @@
 python3 ./src/main.py \
-    --population-size 50 \
-    --crossover-rate 0.6 \
-    --mutation-rate 0.4 \
+    --population-size 100 \
+    --crossover-rate 0.8 \
+    --mutation-rate 0.3 \
     --max-iterations 20000 \
-    --elitism-rate 0.1 \
+    --elitism-rate 0.2 \
     --selection-pressure 1.5 \
     --stagnation-limit 100 \
     --seed 0 \

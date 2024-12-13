@@ -79,10 +79,10 @@ def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, prns, total
     prn_index = rand.randint(0, total_prns-1)
     prn_vram = prns[prn_index]['prn_vram']
     prn_type = prns[prn_index]['prn_type'] - 1
-    old_gpu_index = solution[prn_index]
+    old_gpu_index = mutated_solution[prn_index]
 
     # Sort a valid GPU for the PRN to be reallocated to
-    valid_gpus = [i for i in range(total_gpus) if gpu_vram[i] >= prn_vram and i != old_gpu_index]
+    valid_gpus = [i for i in range(total_gpus) if mutated_gpu_vram[i] >= prn_vram and i != old_gpu_index]
     if valid_gpus:  
         new_gpu_index = rand.choice(valid_gpus)
 
@@ -100,7 +100,7 @@ def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, prns, total
 
         mutated_solution[prn_index] = new_gpu_index
 
-    return mutated_solution, gpu_vram, gpu_type_dist, fitness
+    return mutated_solution, mutated_gpu_vram, mutated_gpu_type_dist, fitness
     
 
 def crossover_solutions(parent1, parent2, prns, total_prns, total_types, total_gpus, total_vram):

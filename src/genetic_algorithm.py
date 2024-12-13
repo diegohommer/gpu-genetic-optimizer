@@ -88,6 +88,7 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
         gpu_vram_population = np.copy(new_gpu_vram_population)
         gpu_type_dist_population = np.copy(new_gpu_type_dist_population)
         fitness_population = np.copy(new_fitness_population)
+        print(fitness_population)
 
         i += 1
 
