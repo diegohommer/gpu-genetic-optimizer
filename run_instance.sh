@@ -1,10 +1,10 @@
 python3 ./src/main.py \
-    --population-size 100 \
-    --crossover-rate 0.5 \
-    --mutation-rate 0.05 \
-    --max-iterations 1000 \
+    --population-size 50 \
+    --crossover-rate 0.6 \
+    --mutation-rate 0.4 \
+    --max-iterations 20000 \
     --elitism-rate 0.1 \
-    --stagnation-limit 50 \
-    --hall-of-fame-size 1 \
-    --seed None \
-    test.txt < example_instances/dog_7.txt
+    --selection-pressure 1.5 \
+    --stagnation-limit 100 \
+    --seed 0 \
+    test.txt < example_instances/dog_7.txt 

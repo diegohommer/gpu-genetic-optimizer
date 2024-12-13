@@ -24,7 +24,7 @@ def generate_feasible_solution(prns: int, total_prns: int, total_types: int, tot
                 gpu_vram[gpu_index] -= prn_vram             
                 gpu_type_dist[gpu_index][prn_type] += 1       
                 if(gpu_type_dist[gpu_index][prn_type] == 1):
-                    fitness += 1                            
+                    fitness += 1                        
                 break
         else:
             # If heuristic fails to find a valid solution run for the hills!
@@ -42,7 +42,6 @@ def generate_initial_population(population_size: int, total_gpus: int, total_vra
     gpu_type_dist_population = np.empty((population_size, total_gpus, total_types), dtype=int)    # GPUs type distribution per solution/chromosome
     fitness_population = np.empty(population_size, dtype=int)                                     # Fitness per solution/chromosome
     best_solution = 0                                                                             # Best solution population index
-    total_mutations = int(0.5 * population_size) 
 
     # Insert valid solution data into populations
     valid_solution, solution_vram, solution_type_dist, solution_fitness = generate_feasible_solution(prns, total_prns, total_types, total_gpus, total_vram)
@@ -58,48 +57,53 @@ def generate_initial_population(population_size: int, total_gpus: int, total_vra
             gpu_vram=solution_vram,
             gpu_type_dist=solution_type_dist,
             fitness=solution_fitness,
-            total_mutations=total_mutations, 
             prns=prns,
             total_prns=total_prns,
             total_gpus=total_gpus
         )
-        if(fitness_population[i] > fitness_population[best_solution]): best_solution = i # Update best solution found
+        if(fitness_population[i] < fitness_population[best_solution]): 
+            best_solution = i 
 
     return population, gpu_vram_population, gpu_type_dist_population, fitness_population, best_solution
 
 
-def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, total_mutations: int, prns, total_prns: int, total_gpus: int):
+def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, prns, total_prns: int, total_gpus: int):
     """
     Randomly mutates the input chromosome (solution) by changing the allocation of PRNs
     """
-    for _ in range(total_mutations):
-        # Sort a random PRN to be reallocated
-        prn_index = rand.randint(0, total_prns-1)
-        prn_vram = prns[prn_index]['prn_vram']
-        prn_type = prns[prn_index]['prn_type'] - 1
-        old_gpu_index = solution[prn_index]
+    mutated_solution = solution.copy()
+    mutated_gpu_vram = gpu_vram.copy()
+    mutated_gpu_type_dist = gpu_type_dist.copy()
 
-        # Sort a valid GPU for the PRN to be reallocated to
-        valid_gpus = [i for i in range(total_gpus) if gpu_vram[i] >= prn_vram and i != old_gpu_index]
-        if valid_gpus:  
-            new_gpu_index = rand.choice(valid_gpus)
+    # Sort a random PRN to be reallocated
+    prn_index = rand.randint(0, total_prns-1)
+    prn_vram = prns[prn_index]['prn_vram']
+    prn_type = prns[prn_index]['prn_type'] - 1
+    old_gpu_index = solution[prn_index]
 
-            # Update VRAM & type distribution of old and new GPU
-            gpu_vram[old_gpu_index] += prn_vram           
-            gpu_type_dist[old_gpu_index][prn_type] -= 1
-            gpu_vram[new_gpu_index] -= prn_vram 
-            gpu_type_dist[new_gpu_index][prn_type] += 1
+    # Sort a valid GPU for the PRN to be reallocated to
+    valid_gpus = [i for i in range(total_gpus) if gpu_vram[i] >= prn_vram and i != old_gpu_index]
+    if valid_gpus:  
+        new_gpu_index = rand.choice(valid_gpus)
 
-            # Update fitness of mutated solution
-            if gpu_type_dist[old_gpu_index][prn_type] == 0: fitness -= 1
-            if gpu_type_dist[new_gpu_index][prn_type] == 1: fitness += 1
+        # Update VRAM & type distribution of old and new GPU
+        mutated_gpu_vram[old_gpu_index] += prn_vram           
+        mutated_gpu_type_dist[old_gpu_index][prn_type] -= 1
+        mutated_gpu_vram[new_gpu_index] -= prn_vram 
+        mutated_gpu_type_dist[new_gpu_index][prn_type] += 1
 
-            solution[prn_index] = new_gpu_index
+        # Update fitness of mutated solution
+        if mutated_gpu_type_dist[old_gpu_index][prn_type] == 0: 
+            fitness -= 1
+        if mutated_gpu_type_dist[new_gpu_index][prn_type] == 1: 
+            fitness += 1
 
-    return solution, gpu_vram, gpu_type_dist, fitness
+        mutated_solution[prn_index] = new_gpu_index
+
+    return mutated_solution, gpu_vram, gpu_type_dist, fitness
     
 
-def recombine_solutions(parent1, parent2, prns, total_prns, total_types, total_gpus, total_vram):
+def crossover_solutions(parent1, parent2, prns, total_prns, total_types, total_gpus, total_vram):
     """
     Combines two parent solutions into a new child solution using uniform crossover.
     """
@@ -141,3 +145,25 @@ def recombine_solutions(parent1, parent2, prns, total_prns, total_types, total_g
                 return generate_feasible_solution(prns, total_prns, total_types, total_gpus, total_vram)
             
     return child_solution, child_gpu_vram, child_gpu_type_dist, child_fitness       
+
+
+def select_parents(fitness_population: np.ndarray, selection_pressure: float, population_size: int):
+    """
+    Select parents from the population using roulette wheel selection with a constant selection pressure.
+    
+    Args:
+        fitness_population (numpy.ndarray): Array containing the fitness values of each individual in the population.
+        selection_pressure (float): A constant value representing the selection pressure. Values > 1 increase pressure, values < 1 decrease pressure.
+        
+    Returns:
+        tuple: Two selected parents indices.
+    """
+    # Scale fitness values based on the selection pressure
+    scaled_fitness = fitness_population ** selection_pressure
+    probabilities = scaled_fitness / scaled_fitness.sum()
+    
+    # Perform roulette wheel selection
+    parent1 = np.random.choice(population_size, p=probabilities)
+    parent2 = np.random.choice(population_size, p=probabilities)
+    
+    return parent1, parent2
