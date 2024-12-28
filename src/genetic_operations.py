@@ -15,7 +15,7 @@ def generate_feasible_solution(prns: int, total_prns: int, total_types: int, tot
     # First Fit Descending (FFD) greedy heuristic to try to find a valid solution
     for prn_index in prns_sorted_by_vram:
         prn_vram = prns[prn_index]['prn_vram']
-        prn_type = prns[prn_index]['prn_type'] - 1
+        prn_type = prns[prn_index]['prn_type'] 
 
         # Check each GPU for sufficient VRAM        
         for gpu_index in range(total_gpus):            
@@ -78,7 +78,7 @@ def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, prns, total
     # Sort a random PRN to be reallocated
     prn_index = rand.randint(0, total_prns-1)
     prn_vram = prns[prn_index]['prn_vram']
-    prn_type = prns[prn_index]['prn_type'] - 1
+    prn_type = prns[prn_index]['prn_type']
     old_gpu_index = mutated_solution[prn_index]
 
     # Sort a valid GPU for the PRN to be reallocated to
@@ -115,7 +115,7 @@ def crossover_solutions(parent1, parent2, prns, total_prns, total_types, total_g
 
     for prn_index in range(total_prns):
         prn_vram = prns[prn_index]['prn_vram']
-        prn_type = prns[prn_index]['prn_type'] - 1
+        prn_type = prns[prn_index]['prn_type'] 
 
         # 50%-50% chance to receive each allocation from one of the parents
         if (rand.random() < 0.5):
