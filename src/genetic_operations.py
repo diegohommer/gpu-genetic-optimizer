@@ -1,33 +1,34 @@
 import random as rand
 import numpy as np
 
-
 def generate_feasible_solution(prns: int, total_prns: int, total_types: int, total_gpus: int, total_vram: int):
     """
     Finds a feasible solution for the OGD problem instance.
     """
-    prns_sorted_by_vram = np.argsort(-prns['prn_vram'])             # PRNs sorted by VRAM consumption (descending)
+    # Sorts the PRNs first by type and then by VRAM (descending)
+    prns_sorted_by_type_and_vram = sorted(prns, key=lambda prn: (prn['prn_type'], -prn['prn_vram']))
+
     gpu_vram = np.full(total_gpus, total_vram, dtype=int)           # Remaining VRAM per GPU
     gpu_type_dist = np.zeros((total_gpus, total_types), dtype=int)  # Type distribution (GPUs x Types)
     solution = np.full(total_prns, -1, dtype=int)                   # Solution array (-1 => unallocated) 
     fitness = 0
 
     # First Fit Descending (FFD) greedy heuristic to try to find a valid solution
-    for prn_index in prns_sorted_by_vram:
-        prn_vram = prns[prn_index]['prn_vram']
-        prn_type = prns[prn_index]['prn_type'] 
+    for prn_index, prn in enumerate(prns_sorted_by_type_and_vram):  # Usando enumerate para pegar o índice
+        prn_vram = prn['prn_vram']
+        prn_type = prn['prn_type'] 
 
         # Check each GPU for sufficient VRAM        
         for gpu_index in range(total_gpus):            
-            if (prn_vram <= gpu_vram[gpu_index]): 
+            if prn_vram <= gpu_vram[gpu_index]: 
                 solution[prn_index] = gpu_index                   
-                gpu_vram[gpu_index] -= prn_vram             
-                gpu_type_dist[gpu_index][prn_type] += 1       
-                if(gpu_type_dist[gpu_index][prn_type] == 1):
-                    fitness += 1                        
+                gpu_vram[gpu_index] -= prn_vram              # Subtract VRAM from GPU
+                gpu_type_dist[gpu_index][prn_type] += 1      # Increment type count for this GPU
+                if gpu_type_dist[gpu_index][prn_type] == 1:
+                    fitness += 1  # Increment fitness when the first PRN of this type is placed
                 break
         else:
-            # If heuristic fails to find a valid solution run for the hills!
+           # If heuristic fails to find a valid solution run for the hills!
             return False
 
     return solution, gpu_vram, gpu_type_dist, fitness
@@ -104,47 +105,57 @@ def mutate_solution(solution, gpu_vram, gpu_type_dist, fitness: int, prns, total
     
 
 def crossover_solutions(parent1, parent2, prns, total_prns, total_types, total_gpus, total_vram):
-    """
-    Combines two parent solutions into a new child solution using uniform crossover.
-    """
-    # Initialize child chromosome and GPUs 
+    """ Combines two parental solutions into a new child solution, prioritizing the minimization
+    of type dispersion of PRNs across GPUs and attempting to group similar PRNs on the same GPU. """
+
+    # Initializes solution, remaining VRAM, and type distribution
     child_solution = np.full(total_prns, -1, dtype=int)
     child_gpu_vram = np.full(total_gpus, total_vram, dtype=int)
     child_gpu_type_dist = np.zeros((total_gpus, total_types), dtype=int)
     child_fitness = 0
 
+    # Iterates over each PRN
     for prn_index in range(total_prns):
         prn_vram = prns[prn_index]['prn_vram']
-        prn_type = prns[prn_index]['prn_type'] 
+        prn_type = prns[prn_index]['prn_type']
+        
+        # Selects a GPU candidate from the parents
+        candidate_gpu = None
 
-        # 50%-50% chance to receive each allocation from one of the parents
-        if (rand.random() < 0.5):
-            selected_gpu = parent1[prn_index]
-        else:
-            selected_gpu = parent2[prn_index]
-
-        if(child_gpu_vram[selected_gpu] >= prn_vram):
-            # If the chosen allocation is valid, transfer it to the child solution/chromosome
-            child_solution[prn_index] = selected_gpu
-            child_gpu_vram[selected_gpu] -= prn_vram
-            child_gpu_type_dist[selected_gpu][prn_type] += 1
-            if child_gpu_type_dist[selected_gpu][prn_type] == 1:
-                child_fitness += 1
-        else:
-            # If the chosen allocation isnt valid, sort a valid GPU to allocate the PRN to
-            valid_gpus = [gpu_idx for gpu_idx in range(total_gpus) if child_gpu_vram[gpu_idx] >= prn_vram]
+        # Attempts to inherit the allocation from the parents, prioritizing the highest number of PRNs of the same type.
+        for parent in (parent1, parent2):
+            gpu = parent[prn_index]
+            if gpu != -1 and child_gpu_vram[gpu] >= prn_vram:
+                # Prioritizes the GPU that already has the most PRNs of the same type.
+                if candidate_gpu is None or child_gpu_type_dist[gpu][prn_type] > child_gpu_type_dist[candidate_gpu][prn_type]:
+                    candidate_gpu = gpu
+        
+        # If no valid GPU is inherited, selects a new GPU with the least type dispersion.
+        if candidate_gpu is None:
+            valid_gpus = [
+                gpu for gpu in range(total_gpus)
+                if child_gpu_vram[gpu] >= prn_vram
+            ]
             if valid_gpus:
-                selected_gpu = rand.choice(valid_gpus)
-                child_solution[prn_index] = selected_gpu
-                child_gpu_vram[selected_gpu] -= prn_vram
-                child_gpu_type_dist[selected_gpu][prn_type] += 1
-                if child_gpu_type_dist[selected_gpu][prn_type] == 1:
-                    child_fitness += 1
+                # For the new GPU, prioritizes selecting one that already has PRNs of the same type.
+                candidate_gpu = min(
+                    valid_gpus,
+                    key=lambda g: (child_gpu_type_dist[g][prn_type], child_gpu_vram[g])
+                )
             else:
-                # If couldn't find a valid recombination return a feasible solution
+                # If no valid GPU is found, attempts to generate a feasible solution.
                 return generate_feasible_solution(prns, total_prns, total_types, total_gpus, total_vram)
-            
-    return child_solution, child_gpu_vram, child_gpu_type_dist, child_fitness       
+
+        # Updates the allocation for the child.
+        child_solution[prn_index] = candidate_gpu
+        child_gpu_vram[candidate_gpu] -= prn_vram
+        child_gpu_type_dist[candidate_gpu][prn_type] += 1
+
+        # Updates the fitness
+        if child_gpu_type_dist[candidate_gpu][prn_type] == 1:
+            child_fitness += 1
+
+    return child_solution, child_gpu_vram, child_gpu_type_dist, child_fitness
 
 
 def select_parents(fitness_population: np.ndarray, selection_pressure: float, population_size: int):
