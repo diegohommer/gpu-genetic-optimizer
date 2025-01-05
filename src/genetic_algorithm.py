@@ -24,6 +24,7 @@ Returns:
 
 import random as rand
 import numpy as np
+import time
 
 from genetic_operations import \
     generate_initial_population, \
@@ -42,6 +43,7 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
     mutation_rate = params.mutation_rate
     elitism_rate = params.elitism_rate
     selection_pressure = params.selection_pressure
+    time_limit = params.time_limit
     max_iterations = params.max_iterations
     stagnation_limit = params.stagnation_limit
     seed = params.seed
@@ -62,10 +64,21 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
         population_size, total_gpus, total_vram, total_types, total_prns, prns
     )
 
-
+    start_time = time.time()
     i = 0
     stagnation_counter = 0
-    while (i < max_iterations) and (stagnation_counter < stagnation_limit):
+    while True:
+        # Check for stop conditions
+        if time_limit and (time.time() - start_time > time_limit):
+            print("\nTime limit reached, stopping the algorithm.")
+            break
+        if max_iterations is not None and i >= max_iterations:
+            print("\nMaximum iterations reached, stopping the algorithm.")
+            break
+        if stagnation_limit is not None and stagnation_counter >= stagnation_limit:
+            print("\nStagnation limit reached, stopping the algorithm.")
+            break
+
         # Valid generated solutions/chromosomes
         new_population = np.empty(
             (population_size, total_prns), dtype=int)
