@@ -1,4 +1,36 @@
-from genetic_operations import *
+"""
+This module contains the implementation of the genetic algorithm for solving the OGD problem.
+
+The `run_genetic_algorithm` function evolves a population of potential solutions over
+multiple generations using selection, crossover, mutation, and elitism. The process continues
+until either the maximum number of iterations is reached or stagnation is detected.
+
+Function:
+    run_genetic_algorithm: Executes the genetic algorithm to find the best solution.
+
+Parameters:
+    total_gpus (int): Total number of GPUs.
+    total_vram (int): Total amount of VRAM available.
+    total_types (int): Total number of GPU types.
+    total_prns (int): Total number of PRNs.
+    prns (list): List containing the PRNs.
+    params (object): Configuration object containing genetic algorithm parameters such as
+                     population size, mutation rate, elitism rate, etc.
+
+Returns:
+    None: The function prints the best solution, VRAM allocation, GPU type distribution,
+          fitness score, and stagnation status at the end of the algorithm.
+"""
+
+import random as rand
+import numpy as np
+
+from genetic_operations import \
+    generate_initial_population, \
+    mutate_solution, \
+    crossover_solutions, \
+    select_parents, \
+    print_ga_outputs
 
 def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns, params):
     """
@@ -16,22 +48,40 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
     total_elites = int(population_size * elitism_rate)
 
     # Set random seed for reproducibility
-    if(seed):
+    if seed:
         np.random.seed(seed)
 
     # Create initial population
-    population, gpu_vram_population, gpu_type_dist_population, fitness_population, best_solution = generate_initial_population(
+    (
+        population,
+        gpu_vram_population,
+        gpu_type_dist_population,
+        fitness_population,
+        best_solution
+    ) = generate_initial_population(
         population_size, total_gpus, total_vram, total_types, total_prns, prns
     )
+
 
     i = 0
     stagnation_counter = 0
     while (i < max_iterations) and (stagnation_counter < stagnation_limit):
-        new_population = np.empty((population_size, total_prns), dtype=int)                               # Valid generated solutions/chromosomes
-        new_gpu_vram_population = np.empty((population_size, total_gpus), dtype=int)                      # GPUs remaining VRAM per solution/chromosome
-        new_gpu_type_dist_population = np.empty((population_size, total_gpus, total_types), dtype=int)    # GPUs type distribution per solution/chromosome
-        new_fitness_population = np.empty(population_size, dtype=int)                                     # Fitness per solution/chromosome
-    
+        # Valid generated solutions/chromosomes
+        new_population = np.empty(
+            (population_size, total_prns), dtype=int)
+
+        # GPUs remaining VRAM per solution/chromosome
+        new_gpu_vram_population = np.empty(
+            (population_size, total_gpus), dtype=int)
+
+        # GPUs type distribution per solution/chromosome
+        new_gpu_type_dist_population = np.empty(
+            (population_size, total_gpus, total_types), dtype=int)
+
+        # Fitness per solution/chromosome
+        new_fitness_population = np.empty(
+            population_size, dtype=int)
+
         stagnated = True
 
         # ELITISM
@@ -44,9 +94,11 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
             new_gpu_type_dist_population[j] = gpu_type_dist_population[elite_indices[j]]
             new_fitness_population[j] = fitness_population[elite_indices[j]]
 
-        for k in range(total_elites, population_size):            
+        for k in range(total_elites, population_size):
             # SELECT PARENTS
-            parent1_index, parent2_index = select_parents(fitness_population, selection_pressure, population_size)
+            parent1_index, parent2_index = select_parents(
+                fitness_population, selection_pressure, population_size
+            )
             parent1, parent2 = population[parent1_index], population[parent2_index]
 
             # CROSSOVER
@@ -70,13 +122,13 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
             new_population[k] = solution
             new_gpu_vram_population[k] = gpu_vram
             new_gpu_type_dist_population[k] = gpu_type_dist
-            new_fitness_population[k] = fitness 
+            new_fitness_population[k] = fitness
 
             # Update best solution
-            if fitness < new_fitness_population[best_solution]: 
+            if fitness < new_fitness_population[best_solution]:
                 best_solution = k
                 stagnated = False
-        
+
         # Update stagnation counter
         if stagnated:
             stagnation_counter += 1
@@ -88,12 +140,15 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
         gpu_vram_population = np.copy(new_gpu_vram_population)
         gpu_type_dist_population = np.copy(new_gpu_type_dist_population)
         fitness_population = np.copy(new_fitness_population)
-        print(fitness_population)
 
         i += 1
 
-    print(population[best_solution])
-    print(gpu_vram_population[best_solution])
-    print(gpu_type_dist_population[best_solution])
-    print(fitness_population[best_solution])
-    print(stagnated)
+    print_ga_outputs(
+        population[best_solution],
+        gpu_vram_population[best_solution],
+        gpu_type_dist_population[best_solution],
+        fitness_population[best_solution],
+        best_solution,
+        stagnated
+    )
+       

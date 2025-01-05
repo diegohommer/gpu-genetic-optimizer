@@ -178,3 +178,43 @@ def select_parents(fitness_population: np.ndarray, selection_pressure: float, po
     parent2 = np.random.choice(population_size, p=probabilities)
     
     return parent1, parent2
+
+def print_ga_outputs(population, gpu_vram_population, gpu_type_dist_population, fitness_population, best_solution, stagnated):
+    """
+    Prints the outputs of the genetic algorithm in a readable format.
+
+    Args:
+        population : numpy.ndarray
+            The array representing the population of solutions (chromosomes).
+        gpu_vram_population : numpy.ndarray
+            The array representing the remaining VRAM per GPU for each solution in the population.
+        gpu_type_dist_population : numpy.ndarray
+            The array representing the type distribution of GPUs for each solution in the population.
+        fitness_population : numpy.ndarray
+            The array containing the fitness values for each solution in the population.
+        best_solution : int
+            The index of the best solution in the population.
+        stagnated : bool
+            Indicates whether the algorithm has stagnated.
+
+    Returns:
+        None (This function prints the results directly to the console.)
+    """
+    print("\n=== Genetic Algorithm Results ===")
+    print(f"Best Solution Index: {best_solution}")
+    print("\nBest Solution (Chromosome):")
+    print(population[best_solution])
+    
+    print("\nRemaining VRAM per GPU for Best Solution:")
+    print(gpu_vram_population[best_solution])
+    
+    print("\nType Distribution per GPU for Best Solution:")
+    for gpu_idx, gpu_type_dist in enumerate(gpu_type_dist_population[best_solution]):
+        print(f"GPU {gpu_idx + 1}: {gpu_type_dist}")
+    
+    print("\nFitness of Best Solution:")
+    print(fitness_population[best_solution])
+    
+    print("\nAlgorithm Stagnated:")
+    print("Yes" if stagnated else "No")
+    print("=================================\n")
