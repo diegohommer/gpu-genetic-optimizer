@@ -5,6 +5,6 @@ python3 ./src/main.py \
     --max-iterations 20000 \
     --elitism-rate 0.2 \
     --selection-pressure 1.5 \
-    --stagnation-limit 100 \
+    --stagnation-limit 20000 \
     --seed 0 \
     test.txt < example_instances/dog_7.txt 

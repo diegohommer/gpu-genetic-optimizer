@@ -1,9 +1,11 @@
-# Formato
+# Format
 
-Os arquivos tem o seguinte formato. Os números de linha abaixo se referem a linhas não vazias.
+The files have the following format. The line numbers below refer to non-empty lines.
 
-- Linha 1: Número de GPUs (n).
-- Linha 2: Quantidade de VRAM V (que é a mesma para todos os GPUs).
-- Linha 3: Número de tipos diferentes (|T|).
-- Linha 4: Número de PRNs m.
-- Linhas 4+1,...,4+m descrevem cada uma das m PRNs. Cada linha contêm, nesta ordem, os seguintes valores (na forma de números inteiros positivos separados por espaços): tipo da PRN t_j (valor de 1 até |T|) e o consumo de VRAM v_j (valor de 1 até V, mas geralmente muito menor que V).
+- **Line 1:** Number of GPUs (`n`).
+- **Line 2:** Amount of VRAM (`V`) (the same for all GPUs).
+- **Line 3:** Number of different types (`|T|`).
+- **Line 4:** Number of PRNs (`m`).
+- **Lines 5 to (m+4):** Each of the `m` PRNs is described on one line. Each line contains, in this order, the following values (as positive integers separated by spaces):
+  - PRN type (`t_j`) (value from `1` to `|T|`).
+  - VRAM consumption (`v_j`) (value from `1` to `V`, usually much smaller than `V`).
