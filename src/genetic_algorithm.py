@@ -68,6 +68,7 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
     ) = generate_initial_population(
         population_size, total_gpus, total_vram, total_types, total_prns, prns
     )
+    print(fitness_population[best_solution])
 
     start_time = time.time()
     i = 0
