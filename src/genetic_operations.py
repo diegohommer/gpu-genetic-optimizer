@@ -180,42 +180,55 @@ def select_parents(fitness_population: np.ndarray, selection_pressure: float, po
     return parent1, parent2
 
 
-def print_ga_outputs(population, gpu_vram_population, gpu_type_dist_population, fitness_population, best_solution, stagnated):
+def save_ga_outputs_to_file(
+    population,
+    gpu_vram_population,
+    gpu_type_dist_population,
+    fitness_population,
+    best_solution,
+    stagnated,
+    runtime,
+    seed,
+    output_file_name
+):
     """
-    Prints the outputs of the genetic algorithm in a readable format.
+    Saves the genetic algorithm's output to a file.
 
     Args:
-        population : numpy.ndarray
-            The array representing the population of solutions (chromosomes).
-        gpu_vram_population : numpy.ndarray
-            The array representing the remaining VRAM per GPU for each solution in the population.
-        gpu_type_dist_population : numpy.ndarray
-            The array representing the type distribution of GPUs for each solution in the population.
-        fitness_population : numpy.ndarray
-            The array containing the fitness values for each solution in the population.
-        best_solution : int
-            The index of the best solution in the population.
-        stagnated : bool
-            Indicates whether the algorithm has stagnated.
+        population (numpy.ndarray): The array representing the population of solutions.
+        gpu_vram_population (numpy.ndarray): Remaining VRAM per GPU for each solution.
+        gpu_type_dist_population (numpy.ndarray): Type distribution of GPUs for each solution.
+        fitness_population (numpy.ndarray): Fitness values for each solution in the population.
+        best_solution (int): The index of the best solution in the population.
+        stagnated (bool): Whether the algorithm has stagnated.
+        runtime (float): Total runtime of the genetic algorithm in seconds.
+        seed (int): Random seed used for reproducibility.
+        output_file_path (str): Path to the file where the output will be saved.
 
     Returns:
-        None (This function prints the results directly to the console.)
+        None
     """
-    print("\n=== Genetic Algorithm Results ===")
-    print(f"Best Found Solution Index: {best_solution}")
-    print("\nBest Found Solution (Chromosome):")
-    print(population[best_solution])
-    
-    print("\nRemaining VRAM per GPU for Best Found Solution:")
-    print(gpu_vram_population[best_solution])
-    
-    print("\nType Distribution per GPU for Best Found Solution:")
-    for gpu_idx, gpu_type_dist in enumerate(gpu_type_dist_population[best_solution]):
-        print(f"GPU {gpu_idx + 1}: {gpu_type_dist}")
-    
-    print("\nFitness of Best Found Solution:")
-    print(fitness_population[best_solution])
-    
-    print("\nAlgorithm Stagnated:")
-    print("Yes" if stagnated else "No")
-    print("=================================\n")
+    with open("./" + output_file_name, "w") as output_file:
+        output_file.write("\n=== Genetic Algorithm Results ===\n")
+        
+        output_file.write("\nBest Found Solution (Chromosome):\n")
+        output_file.write(f"{population[best_solution].tolist()}\n")
+        
+        output_file.write("\nRemaining VRAM per GPU for Best Found Solution:\n")
+        output_file.write(f"{gpu_vram_population[best_solution].tolist()}\n")
+        
+        output_file.write("\nType Distribution per GPU for Best Found Solution:\n")
+        for gpu_idx, gpu_type_dist in enumerate(gpu_type_dist_population[best_solution]):
+            output_file.write(f"GPU {gpu_idx + 1}: {gpu_type_dist.tolist()}\n")
+        
+        output_file.write("\nFitness of Best Found Solution:\n")
+        output_file.write(f"{fitness_population[best_solution]}\n")
+        
+        output_file.write("\nAlgorithm Stagnated:\n")
+        output_file.write("Yes\n" if stagnated else "No\n")
+        output_file.write("=================================\n")
+        
+        # Add runtime and seed details
+        output_file.write(f"Runtime: {runtime:.2f} seconds\n")
+        output_file.write(f"Seed: {seed}\n")
+

@@ -1,9 +1,10 @@
 python3 ./src/main.py \
+    output.txt \
     --population-size 100 \
     --crossover-rate 0.8 \
     --mutation-rate 0.3 \
-    --elitism-rate 0.2 \
-    --selection-pressure 1.5 \
+    --elitism-rate 0.1 \
+    --selection-pressure 1.4 \
     --time-limit 1800 \
-    --seed 0 \
-    test.txt < example_instances/dog_7.txt 
+    --stagnation-limit 100 \
+    < example_instances/dog_5.txt 

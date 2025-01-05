@@ -23,16 +23,16 @@ def cmd_parser():
     parser = argparse.ArgumentParser(
         description="Solve an instance of the Optimal GPU Distribution problem with a genetic algorithm."
     )
-    parser.add_argument("output-file", help="File to save the best solution.")
+    parser.add_argument("output_file", help="File to save the best solution.")
     parser.add_argument("-p", "--population-size", type=int, default=100, help="Number of initial solutions (default: 100).")
-    parser.add_argument("-c", "--crossover-rate", type=float, default=0.5, help="Rate at which solutions are recombined (default: 0.5).")
-    parser.add_argument("-m", "--mutation-rate", type=float, default=0.05, help="Rate at which solutions are mutated (default: 0.05).")
+    parser.add_argument("-c", "--crossover-rate", type=float, default=0.8, help="Rate at which solutions are recombined (default: 0.5).")
+    parser.add_argument("-m", "--mutation-rate", type=float, default=0.3, help="Rate at which solutions are mutated (default: 0.05).")
     parser.add_argument("-e", "--elitism-rate", type=float, default=0.1, help="Percentage of the best solutions retained (default: 0.1).")
     parser.add_argument("-P", "--selection-pressure", type=float, default=1.2, help="Constant selection pressure for parent selection. (default: 1.5)")
-    parser.add_argument("-t", "--time-limit", type=int, default=None, help="Maximum runtime in seconds. (default: None)")
+    parser.add_argument("-t", "--time-limit", type=int, default=1800, help="Maximum runtime in seconds. (default: None)")
     parser.add_argument("-i", "--max-iterations", type=int, default=None, help="Maximum number of generations (default: None).")
-    parser.add_argument("-s", "--stagnation-limit", type=int, default=None, help="Stop if no improvement after these many generations (default: None).")
-    parser.add_argument("-S", "--seed", type=int, default=0, help="Random seed for reproducibility.")
+    parser.add_argument("-s", "--stagnation-limit", type=int, default=1000, help="Stop if no improvement after these many generations (default: None).")
+    parser.add_argument("-S", "--seed", type=int, default=None, help="Random seed for reproducibility.")
     return parser.parse_args()
 
 def instance_parser():

@@ -31,7 +31,7 @@ from genetic_operations import \
     mutate_solution, \
     crossover_solutions, \
     select_parents, \
-    print_ga_outputs
+    save_ga_outputs_to_file
 
 def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns, params):
     """
@@ -50,8 +50,13 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
     total_elites = int(population_size * elitism_rate)
 
     # Set random seed for reproducibility
-    if seed:
-        np.random.seed(seed)
+    if seed is None:
+        seed = rand.randint(0, 2**32 - 1)  # Generate a random seed
+        print(f"Generated random seed: {seed}")
+    else:
+        print(f"Using provided seed: {seed}")
+
+    np.random.seed(seed)
 
     # Create initial population
     (
@@ -156,12 +161,19 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
 
         i += 1
 
-    print_ga_outputs(
-        population,
-        gpu_vram_population,
-        gpu_type_dist_population,
-        fitness_population,
-        best_solution,
-        stagnated
+    # Calculate runtime
+    runtime = time.time() - start_time
+
+    # Save the output to the specified file
+    save_ga_outputs_to_file(
+        population=population,
+        gpu_vram_population=gpu_vram_population,
+        gpu_type_dist_population=gpu_type_dist_population,
+        fitness_population=fitness_population,
+        best_solution=best_solution,
+        stagnated=stagnated,
+        runtime=runtime,
+        seed=seed,
+        output_file_name=params.output_file
     )
        
