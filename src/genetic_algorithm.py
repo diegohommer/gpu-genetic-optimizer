@@ -144,10 +144,10 @@ def run_genetic_algorithm(total_gpus, total_vram, total_types, total_prns, prns,
         i += 1
 
     print_ga_outputs(
-        population[best_solution],
-        gpu_vram_population[best_solution],
-        gpu_type_dist_population[best_solution],
-        fitness_population[best_solution],
+        population,
+        gpu_vram_population,
+        gpu_type_dist_population,
+        fitness_population,
         best_solution,
         stagnated
     )
