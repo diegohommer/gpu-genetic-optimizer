@@ -179,6 +179,7 @@ def select_parents(fitness_population: np.ndarray, selection_pressure: float, po
     
     return parent1, parent2
 
+
 def print_ga_outputs(population, gpu_vram_population, gpu_type_dist_population, fitness_population, best_solution, stagnated):
     """
     Prints the outputs of the genetic algorithm in a readable format.
@@ -201,18 +202,18 @@ def print_ga_outputs(population, gpu_vram_population, gpu_type_dist_population, 
         None (This function prints the results directly to the console.)
     """
     print("\n=== Genetic Algorithm Results ===")
-    print(f"Best Solution Index: {best_solution}")
-    print("\nBest Solution (Chromosome):")
+    print(f"Best Found Solution Index: {best_solution}")
+    print("\nBest Found Solution (Chromosome):")
     print(population[best_solution])
     
-    print("\nRemaining VRAM per GPU for Best Solution:")
+    print("\nRemaining VRAM per GPU for Best Found Solution:")
     print(gpu_vram_population[best_solution])
     
-    print("\nType Distribution per GPU for Best Solution:")
+    print("\nType Distribution per GPU for Best Found Solution:")
     for gpu_idx, gpu_type_dist in enumerate(gpu_type_dist_population[best_solution]):
         print(f"GPU {gpu_idx + 1}: {gpu_type_dist}")
     
-    print("\nFitness of Best Solution:")
+    print("\nFitness of Best Found Solution:")
     print(fitness_population[best_solution])
     
     print("\nAlgorithm Stagnated:")

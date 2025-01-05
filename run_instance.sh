@@ -7,4 +7,4 @@ python3 ./src/main.py \
     --selection-pressure 1.5 \
     --stagnation-limit 20000 \
     --seed 0 \
-    test.txt < example_instances/dog_7.txt 
+    test.txt < example_instances/dog_test.txt 
